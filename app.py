@@ -5,8 +5,8 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# Configure upload folder
-UPLOAD_FOLDER = 'temp_uploads'
+# Configure upload folder (Vercel serverless functions can only write to /tmp)
+UPLOAD_FOLDER = '/tmp'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB max limit
