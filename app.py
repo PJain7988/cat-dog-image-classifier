@@ -18,7 +18,7 @@ try:
     model = load_trained_model()
     print("Model loaded successfully.")
 except Exception as e:
-    print(f"Warning: Model could not be loaded. Please ensure 'models/cat_dog_classifier.keras' exists. Error: {e}")
+    print(f"Warning: Model could not be loaded. Please ensure 'models/cat_dog_classifier.onnx' exists. Error: {e}")
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
