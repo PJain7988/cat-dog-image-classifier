@@ -4,5 +4,4 @@ matplotlib
 scikit-learn
 seaborn
 pillow
-Flask
-Werkzeug
+streamlit

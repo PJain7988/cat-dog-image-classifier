@@ -1,77 +1,78 @@
+import streamlit as st
 import os
-from flask import Flask, request, jsonify, render_template
+from PIL import Image
 from predict import load_trained_model, predict_image
-from werkzeug.utils import secure_filename
 
-app = Flask(__name__)
+# --- Page Config ---
+st.set_page_config(
+    page_title="Cat vs Dog Classifier",
+    page_icon="🐾",
+    layout="wide"
+)
 
-# Configure upload folder
-UPLOAD_FOLDER = 'temp_uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB max limit
+# --- Title and Header ---
+st.title("🐾 Cat vs Dog Image Classifier")
+st.markdown("Upload an image of a cat or a dog, and our Convolutional Neural Network will predict what it is!")
 
-# Global model variable to avoid reloading on every request
-model = None
+# --- Sidebar for Metrics ---
+st.sidebar.header("Model Evaluation Metrics")
+st.sidebar.markdown("Once you train the model using `train.py`, the training metrics will appear below.")
 
-try:
-    model = load_trained_model()
-    print("Model loaded successfully.")
-except Exception as e:
-    print(f"Warning: Model could not be loaded. Please ensure 'models/cat_dog_classifier.keras' exists. Error: {e}")
+# Display training history if available
+history_path = "static/training_history.png"
+if os.path.exists(history_path):
+    st.sidebar.image(history_path, caption="Training Accuracy & Loss", use_column_width=True)
+else:
+    st.sidebar.warning("Training history not found. Run `python train.py` to generate.")
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+# Display confusion matrix if available
+cm_path = "static/confusion_matrix.png"
+if os.path.exists(cm_path):
+    st.sidebar.image(cm_path, caption="Confusion Matrix", use_column_width=True)
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# --- Main App Logic ---
+col1, col2 = st.columns(2)
 
-@app.route('/', methods=['GET'])
-def index():
-    return render_template('index.html')
-
-@app.route('/predict', methods=['POST'])
-def predict():
-    if model is None:
-        return jsonify({'error': 'Model not loaded. Train the model first.'}), 500
-
-    # check if the post request has the file part
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part in the request.'}), 400
+with col1:
+    st.header("1. Upload Image")
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
     
-    file = request.files['file']
-    
-    # If the user does not select a file, the browser submits an
-    # empty file without a filename.
-    if file.filename == '':
-        return jsonify({'error': 'No selected file.'}), 400
-    
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+    if uploaded_file is not None:
+        # Display the uploaded image
+        image = Image.open(uploaded_file)
+        st.image(image, caption='Uploaded Image.', use_column_width=True)
         
-        try:
-            # Perform prediction
-            pred_class, confidence = predict_image(model, filepath)
-            
-            # Clean up the temp file
-            os.remove(filepath)
-            
-            return jsonify({
-                'class': pred_class,
-                'confidence': f"{confidence:.2f}"
-            })
-            
-        except Exception as e:
-            # Clean up on error
-            if os.path.exists(filepath):
-                os.remove(filepath)
-            return jsonify({'error': str(e)}), 500
-            
-    return jsonify({'error': 'Invalid file type. Allowed types are png, jpg, jpeg.'}), 400
+        # Save temporary image for prediction
+        temp_img_path = "temp_upload.jpg"
+        image.save(temp_img_path)
 
-# Vercel requires the app variable to be exposed, which we did.
-# This block is for local development testing.
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+with col2:
+    st.header("2. Prediction")
+    if uploaded_file is not None:
+        if st.button("Predict 🚀"):
+            with st.spinner("Analyzing image..."):
+                try:
+                    # Load model
+                    model = load_trained_model()
+                    
+                    # Predict
+                    pred_class, confidence = predict_image(model, temp_img_path)
+                    
+                    # Display results
+                    st.success("Prediction Complete!")
+                    st.markdown(f"### **Prediction:** {pred_class}")
+                    st.markdown(f"### **Confidence:** {confidence:.2f}%")
+                    
+                    # Progress bar for visual confidence
+                    st.progress(int(confidence))
+                    
+                except FileNotFoundError:
+                    st.error("Model not found! Please run `python train.py` first to train and save the model.")
+                except Exception as e:
+                    st.error(f"An error occurred during prediction: {e}")
+                finally:
+                    # Clean up temp file
+                    if os.path.exists("temp_upload.jpg"):
+                        os.remove("temp_upload.jpg")
+    else:
+        st.info("Upload an image on the left to see the prediction here.")
