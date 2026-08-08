@@ -21,14 +21,14 @@ st.sidebar.markdown("Once you train the model using `train.py`, the training met
 # Display training history if available
 history_path = "static/training_history.png"
 if os.path.exists(history_path):
-    st.sidebar.image(history_path, caption="Training Accuracy & Loss", use_column_width=True)
+    st.sidebar.image(history_path, caption="Training Accuracy & Loss", use_container_width=True)
 else:
     st.sidebar.warning("Training history not found. Run `python train.py` to generate.")
 
 # Display confusion matrix if available
 cm_path = "static/confusion_matrix.png"
 if os.path.exists(cm_path):
-    st.sidebar.image(cm_path, caption="Confusion Matrix", use_column_width=True)
+    st.sidebar.image(cm_path, caption="Confusion Matrix", use_container_width=True)
 
 # --- Main App Logic ---
 col1, col2 = st.columns(2)
@@ -40,7 +40,7 @@ with col1:
     if uploaded_file is not None:
         # Display the uploaded image
         image = Image.open(uploaded_file)
-        st.image(image, caption='Uploaded Image.', use_column_width=True)
+        st.image(image, caption='Uploaded Image.', use_container_width=True)
         
         # Save temporary image for prediction
         temp_img_path = "temp_upload.jpg"
