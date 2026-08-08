@@ -1,119 +1,78 @@
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, Flatten, Dropout, MaxPooling2D
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import streamlit as st
 import os
-import numpy as np
+from PIL import Image
+from predict import load_trained_model, predict_image
 
-# 1. Imports and Data Download
-# Download dataset
-URL = 'https://cdn.freecodecamp.org/project-data/cats-and-dogs/cats_and_dogs.zip'
-path_to_zip = tf.keras.utils.get_file('cats_and_dogs.zip', origin=URL, extract=True)
-PATH = os.path.join(os.path.dirname(path_to_zip), 'cats_and_dogs')
-
-train_dir = os.path.join(PATH, 'train')
-validation_dir = os.path.join(PATH, 'validation')
-test_dir = os.path.join(PATH, 'test')
-
-# Get number of files in each directory. The train and validation directories
-# each have the subdirectories "dogs" and "cats".
-total_train = sum([len(files) for r, d, files in os.walk(train_dir)])
-total_val = sum([len(files) for r, d, files in os.walk(validation_dir)])
-total_test = len(os.listdir(test_dir))
-
-# Variables for pre-processing and training.
-batch_size = 128
-epochs = 15
-IMG_HEIGHT = 150
-IMG_WIDTH = 150
-
-# 3. Create Image Generators (Cell 3 & 5 logic combined)
-# Cell 5: Data Augmentation for training
-train_image_generator = ImageDataGenerator(
-    rescale=1./255,
-    rotation_range=45,
-    width_shift_range=0.2,
-    height_shift_range=0.2,
-    shear_range=0.2,
-    zoom_range=0.2,
-    horizontal_flip=True,
-    fill_mode='nearest'
+# --- Page Config ---
+st.set_page_config(
+    page_title="Cat vs Dog Classifier",
+    page_icon="🐾",
+    layout="wide"
 )
 
-# Cell 3: Validation and Test generators (no augmentation, only rescale)
-validation_image_generator = ImageDataGenerator(rescale=1./255)
-test_image_generator = ImageDataGenerator(rescale=1./255)
+# --- Title and Header ---
+st.title("🐾 Cat vs Dog Image Classifier")
+st.markdown("Upload an image of a cat or a dog, and our Convolutional Neural Network will predict what it is!")
 
-train_data_gen = train_image_generator.flow_from_directory(
-    batch_size=batch_size,
-    directory=train_dir,
-    shuffle=True,
-    target_size=(IMG_HEIGHT, IMG_WIDTH),
-    class_mode='binary'
-)
+# --- Sidebar for Metrics ---
+st.sidebar.header("Model Evaluation Metrics")
+st.sidebar.markdown("Once you train the model using `train.py`, the training metrics will appear below.")
 
-val_data_gen = validation_image_generator.flow_from_directory(
-    batch_size=batch_size,
-    directory=validation_dir,
-    target_size=(IMG_HEIGHT, IMG_WIDTH),
-    class_mode='binary'
-)
+# Display training history if available
+history_path = "static/training_history.png"
+if os.path.exists(history_path):
+    st.sidebar.image(history_path, caption="Training Accuracy & Loss", use_column_width=True)
+else:
+    st.sidebar.warning("Training history not found. Run `python train.py` to generate.")
 
-# For test_data_gen, shuffle must be False and classes=None, class_mode=None
-# Since the test folder itself has the images without subfolders, we need to pass the parent path 
-# and specify `classes=[test_dir]` if passing the parent, or arrange the folder structure properly.
-# The challenge specifies the test directory has no subdirectories. 
-# Keras flow_from_directory expects subdirectories for classes. A common workaround is to use 
-# a dummy directory or pass the parent directory and explicitly set classes.
-test_data_gen = test_image_generator.flow_from_directory(
-    batch_size=batch_size,
-    directory=PATH,
-    classes=['test'],
-    target_size=(IMG_HEIGHT, IMG_WIDTH),
-    class_mode=None,
-    shuffle=False
-)
+# Display confusion matrix if available
+cm_path = "static/confusion_matrix.png"
+if os.path.exists(cm_path):
+    st.sidebar.image(cm_path, caption="Confusion Matrix", use_column_width=True)
 
-# 7. Model Creation
-model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(IMG_HEIGHT, IMG_WIDTH, 3)),
-    MaxPooling2D(2, 2),
-    Conv2D(64, (3, 3), activation='relu'),
-    MaxPooling2D(2, 2),
-    Conv2D(128, (3, 3), activation='relu'),
-    MaxPooling2D(2, 2),
-    Dropout(0.5),
-    Flatten(),
-    Dense(512, activation='relu'),
-    Dense(1, activation='sigmoid') # Binary classification
-])
+# --- Main App Logic ---
+col1, col2 = st.columns(2)
 
-model.compile(optimizer='adam',
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
+with col1:
+    st.header("1. Upload Image")
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+    
+    if uploaded_file is not None:
+        # Display the uploaded image
+        image = Image.open(uploaded_file)
+        st.image(image, caption='Uploaded Image.', use_column_width=True)
+        
+        # Save temporary image for prediction
+        temp_img_path = "temp_upload.jpg"
+        image.save(temp_img_path)
 
-model.summary()
-
-# 8. Training
-print("\nStarting Training...")
-history = model.fit(
-    train_data_gen,
-    steps_per_epoch=total_train // batch_size,
-    epochs=epochs,
-    validation_data=val_data_gen,
-    validation_steps=total_val // batch_size
-)
-
-# 10. Predictions
-print("\nGenerating Predictions...")
-# Generate predictions
-predictions = model.predict(test_data_gen)
-# Convert probabilities to a list of ints/floats (as requested, 'probabilities' should be a list)
-probabilities = [pred[0] for pred in predictions]
-
-print("\nSample Probabilities:", probabilities[:5])
-print("\nChallenge Completed successfully if accuracy >= 63% and probabilities generated.")
-
-# Note: The challenge tests cell 11, which uses a specific `plotImages` 
-# function and tests the probabilities. Since we are running outside colab, 
-# we output the raw data to demonstrate functionality.
+with col2:
+    st.header("2. Prediction")
+    if uploaded_file is not None:
+        if st.button("Predict 🚀"):
+            with st.spinner("Analyzing image..."):
+                try:
+                    # Load model
+                    model = load_trained_model()
+                    
+                    # Predict
+                    pred_class, confidence = predict_image(model, temp_img_path)
+                    
+                    # Display results
+                    st.success("Prediction Complete!")
+                    st.markdown(f"### **Prediction:** {pred_class}")
+                    st.markdown(f"### **Confidence:** {confidence:.2f}%")
+                    
+                    # Progress bar for visual confidence
+                    st.progress(int(confidence))
+                    
+                except FileNotFoundError:
+                    st.error("Model not found! Please run `python train.py` first to train and save the model.")
+                except Exception as e:
+                    st.error(f"An error occurred during prediction: {e}")
+                finally:
+                    # Clean up temp file
+                    if os.path.exists("temp_upload.jpg"):
+                        os.remove("temp_upload.jpg")
+    else:
+        st.info("Upload an image on the left to see the prediction here.")
