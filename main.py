@@ -9,119 +9,152 @@ from predict import load_trained_model, predict_image
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="Cat vs Dog Classifier",
-    page_icon="🐾",
+    page_title="Enterprise Vision AI",
+    page_icon="🏙️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- PREMIUM CUSTOM CSS ---
+# --- CORPORATE SAAS CUSTOM CSS ---
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
     /* Global styling */
     html, body, [class*="css"]  {
-        font-family: 'Outfit', sans-serif;
+        font-family: 'Inter', sans-serif;
     }
     
     .stApp {
-        background: linear-gradient(135deg, #1e1e24 0%, #151518 100%);
-        color: #ffffff;
+        background-color: #f4f7f6;
+        color: #2c3e50;
     }
     
     /* Header and Subheader */
     h1 {
-        color: #f1f2f6;
-        text-align: center;
-        font-weight: 800;
-        font-size: 3rem;
+        color: #1a252f;
+        font-weight: 700;
+        font-size: 2.5rem;
         margin-bottom: 0px;
-        background: -webkit-linear-gradient(45deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+        display: inline-block;
     }
     
     .subtitle {
-        text-align: center;
-        color: #a4b0be;
-        font-size: 1.2rem;
-        margin-top: 5px;
-        margin-bottom: 40px;
-        font-weight: 300;
+        color: #7f8c8d;
+        font-size: 1.1rem;
+        margin-top: 10px;
+        margin-bottom: 30px;
+        font-weight: 400;
     }
     
     /* Upload Box */
     div[data-testid="stFileUploader"] {
-        border: 2px dashed #ff9a9e;
-        border-radius: 15px;
+        border: 1.5px dashed #bdc3c7;
+        border-radius: 8px;
         padding: 20px;
-        background-color: rgba(255,255,255,0.05);
-        transition: all 0.3s ease;
+        background-color: #ffffff;
+        transition: border-color 0.3s ease;
     }
     
     div[data-testid="stFileUploader"]:hover {
-        border-color: #fecfef;
-        background-color: rgba(255,255,255,0.08);
+        border-color: #3498db;
     }
     
-    /* Glassmorphism Prediction Box */
-    .glass-box {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 20px;
-        padding: 30px;
-        text-align: center;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        margin-top: 30px;
-        animation: fadeIn 0.8s ease;
+    /* Structured Data Cards for Prediction */
+    .data-card {
+        background: #ffffff;
+        border: 1px solid #e0e6ed;
+        border-radius: 8px;
+        padding: 24px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .card-header {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #7f8c8d;
+        font-weight: 600;
+        margin-bottom: 12px;
     }
     
     .pred-result {
-        font-size: 3rem;
-        font-weight: 800;
-        margin-bottom: 10px;
-    }
-    
-    .cat-text {
-        background: -webkit-linear-gradient(45deg, #a8edea 0%, #fed6e3 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    
-    .dog-text {
-        background: -webkit-linear-gradient(45deg, #f6d365 0%, #fda085 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 5px;
     }
     
     .confidence {
-        font-size: 1.2rem;
-        color: #ced6e0;
-        font-weight: 400;
+        font-size: 1.1rem;
+        color: #34495e;
+        font-weight: 500;
+        margin-top: 10px;
     }
     
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    /* Status indicators */
+    .status-badge-cat {
+        background-color: #e8f4fd;
+        color: #2980b9;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+
+    .status-badge-dog {
+        background-color: #fdf2e9;
+        color: #d35400;
+        padding: 4px 12px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-bottom: 10px;
     }
     
     /* Button Styling */
     button[kind="primary"] {
-        background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 100%) !important;
+        background-color: #2980b9 !important;
         border: none !important;
-        color: #1e1e24 !important;
+        color: #ffffff !important;
         font-weight: 600 !important;
-        border-radius: 10px !important;
+        border-radius: 6px !important;
         padding: 10px 24px !important;
-        transition: transform 0.2s ease !important;
+        transition: background-color 0.2s ease !important;
+        width: 100%;
     }
     
     button[kind="primary"]:hover {
-        transform: scale(1.05) !important;
-        box-shadow: 0 4px 15px rgba(255, 154, 158, 0.4) !important;
+        background-color: #3498db !important;
+    }
+
+    /* Metric Containers */
+    .metric-container {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        border-top: 1px solid #ecf0f1;
+        padding-top: 15px;
+        margin-top: 15px;
+    }
+    
+    .metric-label {
+        color: #95a5a6;
+        font-size: 0.9rem;
+    }
+    
+    .metric-value {
+        font-weight: 600;
+        color: #2c3e50;
     }
     
     /* Hide default elements */
@@ -133,25 +166,27 @@ st.markdown("""
 
 # --- SIDEBAR FOR METRICS ---
 with st.sidebar:
-    st.markdown("<h2 style='text-align: center; color: #f1f2f6;'>📊 Analytics</h2>", unsafe_allow_html=True)
+    st.markdown("<h3 style='color: #2c3e50; font-weight: 600;'>System Diagnostics</h3>", unsafe_allow_html=True)
     st.markdown("---")
     
     history_path = "static/training_history.png"
     cm_path = "static/confusion_matrix.png"
 
     if os.path.exists(history_path) and os.path.exists(cm_path):
-        st.image(history_path, caption="Training Accuracy & Loss", use_container_width=True)
+        st.markdown("**Model Performance**")
+        st.image(history_path, use_container_width=True)
         st.markdown("<br>", unsafe_allow_html=True)
-        st.image(cm_path, caption="Confusion Matrix", use_container_width=True)
+        st.markdown("**Confusion Matrix Analysis**")
+        st.image(cm_path, use_container_width=True)
     else:
-        st.info("Model training metrics will appear here after you run `train.py`.")
+        st.info("Performance telemetry is currently unavailable. Run `train.py` to generate system metrics.")
 
 # --- APP HEADER ---
-st.markdown("<h1>🐾 Neural Vision</h1>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>Advanced Cat vs Dog Image Classification using Deep Learning</div>", unsafe_allow_html=True)
+st.markdown("<h1>Enterprise Vision AI Platform</h1>", unsafe_allow_html=True)
+st.markdown("<div class='subtitle'>Automated image classification system for binary entity resolution (Felis catus vs. Canis lupus familiaris).</div>", unsafe_allow_html=True)
 
 # --- LOAD MODEL ---
-@st.cache_resource(show_spinner="Initializing Neural Network...")
+@st.cache_resource(show_spinner="Loading inference engine...")
 def get_model():
     try:
         model = load_trained_model()
@@ -162,8 +197,8 @@ def get_model():
 model, model_loaded, error_msg = get_model()
 
 if not model_loaded:
-    st.error(f"⚠️ **Error initializing model:** {error_msg}")
-    st.info("Ensure you have run `train.py` to generate `models/cat_dog_classifier.keras`.")
+    st.error(f"System Error: Inference engine failed to initialize. Details: {error_msg}")
+    st.info("Action Required: Execute `train.py` to compile the classification model.")
     st.stop()
 
 # --- MAIN LAYOUT ---
@@ -171,22 +206,24 @@ col1, col2, col3 = st.columns([1, 2, 1])
 
 with col2:
     # --- FILE UPLOADER ---
-    uploaded_file = st.file_uploader("Drop an image here to analyze", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Upload visual payload for processing", type=["jpg", "jpeg", "png"])
     
     if uploaded_file is not None:
-        # Display the uploaded image
+        # Display the uploaded image inside a card
         try:
             image = Image.open(uploaded_file)
-            st.image(image, use_container_width=True, caption="Target Image", output_format="PNG")
+            st.markdown("<div class='data-card' style='padding: 15px;'>", unsafe_allow_html=True)
+            st.image(image, use_container_width=True, output_format="PNG")
+            st.markdown("</div>", unsafe_allow_html=True)
         except Exception as e:
-            st.error(f"Error loading image: {e}")
+            st.error(f"Data ingestion failed: {e}")
             st.stop()
         
         st.markdown("<br>", unsafe_allow_html=True)
         
         # Add a predict button
-        if st.button("Initialize Analysis 🚀", use_container_width=True, type="primary"):
-            with st.spinner("Processing visual data..."):
+        if st.button("Execute Image Classification", type="primary"):
+            with st.spinner("Processing data through inference engine..."):
                 try:
                     # Save uploaded file temporarily for prediction
                     temp_path = "temp_upload.jpg"
@@ -199,23 +236,24 @@ with col2:
                     if os.path.exists(temp_path):
                         os.remove(temp_path)
                     
-                    # Premium Display Results
-                    css_class = "cat-text" if pred_class == "Cat" else "dog-text"
-                    icon = "🐱" if pred_class == "Cat" else "🐶"
+                    # Premium Corporate Display Results
+                    badge_class = "status-badge-cat" if pred_class == "Cat" else "status-badge-dog"
                     
                     st.markdown(f"""
-                    <div class="glass-box">
-                        <div class="pred-result {css_class}">
-                            {icon} {pred_class}
-                        </div>
-                        <div class="confidence">
-                            Confidence Level: <b>{confidence:.2f}%</b>
+                    <div class="data-card">
+                        <div class="card-header">Classification Output</div>
+                        <div class="{badge_class}">Status: Identified</div>
+                        <div class="pred-result">{pred_class}</div>
+                        
+                        <div class="metric-container">
+                            <span class="metric-label">Confidence Score</span>
+                            <span class="metric-value">{confidence:.2f}%</span>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    # Custom progress bar
+                    # Minimal corporate progress bar
                     st.progress(int(confidence) / 100)
                     
                 except Exception as e:
-                    st.error(f"Analysis failed: {str(e)}")
+                    st.error(f"Inference execution failed: {str(e)}")
