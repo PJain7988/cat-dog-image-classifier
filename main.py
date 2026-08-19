@@ -94,14 +94,15 @@ st.markdown("---")
 def get_model():
     try:
         model = load_trained_model()
-        return model, True
+        return model, True, ""
     except Exception as e:
-        return None, False
+        return None, False, str(e)
 
-model, model_loaded = get_model()
+model, model_loaded, error_msg = get_model()
 
 if not model_loaded:
-    st.error("⚠️ Model not found! Please make sure you have run `train.py` to generate `models/cat_dog_classifier.keras`.")
+    st.error(f"⚠️ Error loading model! Details: {error_msg}")
+    st.info("Please make sure you have run `train.py` to generate `models/cat_dog_classifier.keras`.")
     st.stop()
 
 # --- FILE UPLOADER ---
