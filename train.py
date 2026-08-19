@@ -57,7 +57,7 @@ def train():
     test_dir = os.path.join(PATH, 'test')
 
     batch_size = 32 # Adjusted batch size for smoother training
-    epochs = 15
+    epochs = 1
     IMG_HEIGHT = 150
     IMG_WIDTH = 150
 
