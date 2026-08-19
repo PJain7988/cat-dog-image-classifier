@@ -36,9 +36,21 @@ def plot_training_history(history, save_path='static/training_history.png'):
 def train():
     # 1. Download and Extract Data
     print("Downloading and preparing dataset...")
+    
+    # Fix HTTP 403 Forbidden error by adding a User-Agent
+    import urllib.request
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('User-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36')]
+    urllib.request.install_opener(opener)
+    
     URL = 'https://cdn.freecodecamp.org/project-data/cats-and-dogs/cats_and_dogs.zip'
     path_to_zip = tf.keras.utils.get_file('cats_and_dogs.zip', origin=URL, extract=True)
+    
+    # Handle keras extraction path which can sometimes append '_extracted'
     PATH = os.path.join(os.path.dirname(path_to_zip), 'cats_and_dogs')
+    extracted_path = os.path.join(os.path.dirname(path_to_zip), 'cats_and_dogs_extracted', 'cats_and_dogs')
+    if os.path.exists(extracted_path):
+        PATH = extracted_path
 
     train_dir = os.path.join(PATH, 'train')
     validation_dir = os.path.join(PATH, 'validation')
