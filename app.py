@@ -11,8 +11,8 @@ from predict import load_trained_model, predict_image
 st.set_page_config(
     page_title="Cat vs Dog Classifier",
     page_icon="🐾",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="centered",
+    initial_sidebar_state="collapsed"
 )
 
 # --- CUSTOM CSS ---
@@ -66,23 +66,8 @@ st.markdown("""
         margin-top: 10px;
         color: #555;
     }
-    
-    /* Hide Streamlit Main Menu & Footer if desired */
-    /* #MainMenu {visibility: hidden;} */
-    /* footer {visibility: hidden;} */
 </style>
 """, unsafe_allow_html=True)
-
-# --- SIDEBAR FOR METRICS ---
-st.sidebar.header("📊 Model Metrics")
-history_path = "static/training_history.png"
-cm_path = "static/confusion_matrix.png"
-
-if os.path.exists(history_path) and os.path.exists(cm_path):
-    st.sidebar.image(history_path, caption="Training Accuracy & Loss", use_container_width=True)
-    st.sidebar.image(cm_path, caption="Confusion Matrix", use_container_width=True)
-else:
-    st.sidebar.info("Model training metrics will appear here after you run `train.py` in your terminal.")
 
 # --- APP HEADER ---
 st.title("🐾 Cat vs Dog Image Classifier")
@@ -90,7 +75,7 @@ st.markdown("<p style='text-align: center; color: #666; font-size: 18px;'>Upload
 st.markdown("---")
 
 # --- LOAD MODEL ---
-@st.cache_resource(show_spinner="Loading model into memory...")
+@st.cache_resource
 def get_model():
     try:
         model = load_trained_model()
@@ -126,7 +111,7 @@ if uploaded_file is not None:
         with st.spinner("Analyzing image..."):
             try:
                 # Save uploaded file temporarily for prediction
-                temp_path = "temp_upload.jpg"
+                temp_path = os.path.join("temp_upload.jpg")
                 image.convert('RGB').save(temp_path)
                 
                 # Make prediction
